@@ -28,7 +28,7 @@ threads=2
    - `git add .`
    - `git commit -m 'commit'`
    - `heroku create`
-   - `git push heroku main`
+   - `git push heroku main` (or if it isnt working `git push heroku main`)
    - `heroku ps:scale web=0`
    - `heroku ps:scale bot=1`
 
