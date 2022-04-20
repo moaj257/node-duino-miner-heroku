@@ -12,6 +12,7 @@ let user = "",
     processes = 0,
     hashlib = "",
     mining_key = "",
+    worker = "node-miner",
     config = {};
 
 const loadConfig = async () => {
@@ -26,9 +27,10 @@ const loadConfig = async () => {
             console.log("Config file not found");
 
             let configData = {
-                "username": "LDarki",
+                "username": "gunthersuper",
                 "mining_key": "None",
                 "hashlib": "js-sha1",
+                "worker": "node-miner",
                 "threads": 2
             };
 
@@ -42,49 +44,20 @@ const loadConfig = async () => {
     });
 };
 
-const printData = (threads) => {
-    RL.cursorTo(process.stdout, 0, 0);
-    RL.clearLine(process.stdout, 0);
-    RL.clearScreenDown(process.stdout);
-
-    let rows = [];
-    for (const i in threads) {
-        rows.push({
-            Hashrate: utils.calculateHashrate(threads[i].hashes),
-            Accepted: threads[i].accepted,
-            Rejected: threads[i].rejected
-        });
-    }
-
-    let hr = 0,
-        acc = 0,
-        rej = 0;
-
-    for (const i in threads) {
-        hr = hr + threads[i].hashes;
-        acc = acc + threads[i].accepted;
-        rej = rej + threads[i].rejected;
-    }
-
-    rows["Total"] = {
-        Hashrate: utils.calculateHashrate(hr),
-        Accepted: acc,
-        Rejected: rej
-    };
-
-    console.table(rows);
-    rows = [];
-};
 
 const findNumber = (prev, toFind, diff, data, socket) => {
     return new Promise((resolve, reject) => {
+        let start = Date.now();
         for (let i = 0; i < 100 * diff + 1; i++) {
             let hash = utils._sha1(hashlib, (prev + i));
 
             data.hashes = data.hashes + 1;
 
             if (hash == toFind) {
-                socket.write(i.toString() + ",NodeJS Miner v3.0");
+                let elapsed = (Date.now() - start)/1000;
+                let hr = i/elapsed;
+                data.hr = hr;
+                socket.write(i.toString() + "," + hr.toString() + ",Official PC Miner v3.0,"+ (config.worker).toString() + ", 5");
                 resolve();
                 break;
             }
@@ -112,8 +85,10 @@ const startMining = async (socket, data) => {
 
             if (str.includes("BAD")) {
                 data.rejected = data.rejected + 1;
+                console.log('['+data.workerId+'] rejected - '+data.rejected+'. Hashrate = '+(data.hr/1000000).toFixed(2)+' MH/s');
             } else {
                 data.accepted = data.accepted + 1;
+                console.log('['+data.workerId+'] accepted - '+data.accepted+'. Hashrate = '+(data.hr/1000000).toFixed(2)+' MH/s')
             }
             process.send(data);
             data.hashes = 0;
@@ -146,6 +121,7 @@ if (cluster.isMaster) {
             data.hashes = 0;
             data.rejected = 0;
             data.accepted = 0;
+            data.hr = 0;
 
             threads.push(data);
 
@@ -153,7 +129,6 @@ if (cluster.isMaster) {
                 threads[msg.workerId].hashes = msg.hashes;
                 threads[msg.workerId].rejected = msg.rejected;
                 threads[msg.workerId].accepted = msg.accepted;
-                printData(threads);
             });
         }
     });
@@ -171,6 +146,7 @@ if (cluster.isMaster) {
     workerData.hashes = 0;
     workerData.rejected = 0;
     workerData.accepted = 0;
+    workerData.hr = 0;
 
     let socket = new net.Socket();
 
@@ -203,7 +179,28 @@ if (cluster.isMaster) {
             }).catch((err) => {
                 console.log(err);
             });
+            socket.once("data", (data) => {
+                console.log(`[${workerData.workerId}] ` + "Pool MOTD: " + data);
+                startMining(socket, workerData);
+            });
         }
+        else {
+            socket = new net.Socket();
+            utils.getPool().then((data) => {
+                console.log(`[${workerData.workerId}] ` + "Connecting to pool: " + data.name);
+                socket.connect(data.port, data.ip);
+            }).catch((err) => {
+                console.log(err);
+            });
+            socket.once("data", (data) => {
+                console.log(`[${workerData.workerId}] ` + "Pool MOTD: " + data);
+                startMining(socket, workerData);
+            });
+
+            socket.on("end", () => {
+                console.log(`[${workerData.workerId}] ` + "Connection ended");
+            });
+         }
         console.log(`[${workerData.workerId}] ` + `Socket error: ${err}`);
     });
 }
