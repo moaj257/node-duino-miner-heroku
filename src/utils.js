@@ -25,7 +25,14 @@ const getPool = async () => {
             .then(res => res.json())
             .then(res => {
                 if(res.success == true) resolve(res);
-                else reject("Failed to fetch the pool");
+                else {
+                    (async() => {
+                        reject("Failed to fetch the pool");
+                        await new Promise(r => setTimeout(r, 5000));
+                        getPool()
+                    });
+                   
+                }
             }).catch(err => {
                 reject(err);
             });
