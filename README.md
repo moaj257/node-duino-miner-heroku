@@ -7,8 +7,8 @@ A **[duino-coin](https://duinocoin.com/)**.miner made in NodeJS. This repo is fo
 
 1. NodeJS: https://nodejs.org/
 2. Git: https://git-scm.com/
-3. Heroku CLI:https://devcenter.heroku.com/articles/heroku-cli
-4. Heroku account: 
+3. Heroku CLI: https://devcenter.heroku.com/articles/heroku-cli
+4. Heroku account: https://heroku.com/
 
 ## Installation:
 
