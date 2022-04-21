@@ -17,7 +17,7 @@ A **[duino-coin](https://duinocoin.com/)**.miner made in NodeJS. This repo is fo
 3. Default config file:
 ```
 username=gunthersuper
-mining_key=PCtest
+mining_key=
 hashlib=js-sha1
 worker=node-miner
 threads=2
@@ -57,7 +57,7 @@ Notes:
 - Default config file:
 ```
 username=gunthersuper
-mining_key=PCtest
+mining_key=
 hashlib=js-sha1
 worker=node-miner
 threads=2
